@@ -1,0 +1,19 @@
+{
+  "name": "serveur-image",
+  "version": "1.0.0",
+  "description": "Server for handling images resource files",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamuelD28/image_server.git"
+  },
+  "author": "samuel dube, maxime boisvert",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SamuelD28/image_server/issues"
+  },
+  "homepage": "https://github.com/SamuelD28/image_server#readme"
+}
