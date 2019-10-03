@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://github.com/SamuelD28/image_server/issues"
   },
-  "homepage": "https://github.com/SamuelD28/image_server#readme"
+  "homepage": "https://github.com/SamuelD28/image_server#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.1.0",
+    "express": "^4.17.1",
+    "multer": "^1.4.2",
+    "nodemon": "^1.19.3"
+  }
 }

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Upload file</title>
+</head>
+
+<body>
+    <form action="/upload" enctype="multipart/form-data" method="POST">
+        <input type="file" name="myFile" />
+        <input type="submit" value="Upload a file" />
+    </form>
+
+    <form action="/uploadmultiple" enctype="multipart/form-data" method="POST">
+        Select images: <input type="file" name="myFiles" multiple>
+        <input type="submit" value="Upload your files" />
+    </form>
+
+    <form action="/upload/photo" enctype="multipart/form-data" method="POST">
+        <input type="file" name="myImage" accept="image/*" />
+        <input type="submit" value="Upload Photo" />
+    </form>
+</body>
