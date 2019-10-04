@@ -1,8 +1,8 @@
 import { MongoClient, Db, Collection } from "mongodb";
 
 /**
- * @description Utility class for talking with a mongo
- * database.
+ * @description Class responsible for communicating with a
+ * mongo database
  *
  * @author Samuel Dube
  */
@@ -43,7 +43,7 @@ class MongoDatabase {
             }
 
             if (!this.Client.isConnected()) {
-                reject("Cant establish connection with the database");
+                reject("[ERR] - Can't connect with the database");
             }
 
             resolve(this.Client.db(this.DbName));
@@ -57,7 +57,8 @@ class MongoDatabase {
      * @param name Name of the collection to retrieve
      * @param action Callback function to pass the collection object to.
      */
-    public GetCollection(name: string)
+    public GetCollection(
+        name: string)
         : Promise<Collection> {
 
         return new Promise((resolve, reject) => {
@@ -86,7 +87,8 @@ class MongoDatabase {
      *
      * @param name Name of the collection to create
      */
-    public CreateCollection(name: string)
+    public CreateCollection(
+        name: string)
         : Promise<Collection> {
 
         return new Promise((resolve) => {
@@ -104,7 +106,9 @@ class MongoDatabase {
      * @param action Callback function to be pass
      * @param predicate Predicate for finding the document
      */
-    public GetDocumentInCollection(name: string, predicate: object)
+    public GetDocumentInCollection(
+        name: string,
+        predicate: object)
         : Promise<{ [key: string]: any }> {
 
         return new Promise((resolve) => {
@@ -122,7 +126,9 @@ class MongoDatabase {
      * @param action Callback function to be pass
      * @param predicate Optionnal predicate for finding documents
      */
-    public GetDocumentsInCollection(name: string, predicate?: object)
+    public GetDocumentsInCollection(
+        name: string, 
+        predicate?: object)
         : Promise<Array<{ [key: string]: any }>> {
 
         return new Promise((resolve) => {
@@ -141,7 +147,9 @@ class MongoDatabase {
      * @param name Name of the collection to insert the data into
      * @param data Data to insert inside the collection
      */
-    public InsertInCollection(name: string, data: object | Array<object>)
+    public InsertInCollection(
+        name: string, 
+        data: object | Array<object>)
         : Promise<{ [key: string]: any }> {
 
         return new Promise((resolve) => {
@@ -163,7 +171,9 @@ class MongoDatabase {
      * @param name Name of the collection to remove the data from
      * @param condition Condition for removing the data
      */
-    public DeleteInCollection(name: string, condition: object)
+    public DeleteInCollection(
+        name: string, 
+        condition: object)
         : Promise<{ [key: string]: any }> {
 
         return new Promise((resolve) => {
@@ -183,7 +193,9 @@ class MongoDatabase {
      * @param predicate Predicate for selecting a document for update
      * @param data New data to override the old data with
      */
-    public UpdateInCollection(name: string, predicate: object, data: object)
+    public UpdateInCollection(
+        name: string, 
+        predicate: object, data: object)
         : Promise<{ [key: string]: any }> {
 
         return new Promise((resolve) => {
