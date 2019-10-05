@@ -6,7 +6,7 @@ import { MongoClient, Db, Collection } from "mongodb";
  *
  * @author Samuel Dube
  */
-class MongoDatabase {
+class Mongodb {
     private ConnectionString: string;
     private DbName: string;
     private Client: MongoClient | null;
@@ -127,7 +127,7 @@ class MongoDatabase {
      * @param predicate Optionnal predicate for finding documents
      */
     public GetDocumentsInCollection(
-        name: string, 
+        name: string,
         predicate?: object)
         : Promise<Array<{ [key: string]: any }>> {
 
@@ -148,7 +148,7 @@ class MongoDatabase {
      * @param data Data to insert inside the collection
      */
     public InsertInCollection(
-        name: string, 
+        name: string,
         data: object | Array<object>)
         : Promise<{ [key: string]: any }> {
 
@@ -172,7 +172,7 @@ class MongoDatabase {
      * @param condition Condition for removing the data
      */
     public DeleteInCollection(
-        name: string, 
+        name: string,
         condition: object)
         : Promise<{ [key: string]: any }> {
 
@@ -194,7 +194,7 @@ class MongoDatabase {
      * @param data New data to override the old data with
      */
     public UpdateInCollection(
-        name: string, 
+        name: string,
         predicate: object, data: object)
         : Promise<{ [key: string]: any }> {
 
@@ -209,4 +209,4 @@ class MongoDatabase {
     }
 }
 
-export default MongoDatabase;
+export default Mongodb;

@@ -1,28 +1,22 @@
 import { IDatabaseModel } from "../database";
 
-interface IFile {
-    [size: string]: { path: string, lastRequested: Date }
-}
-
 class Image implements IDatabaseModel {
 
     private FileName: string = "";
-    private FileExtension: string = "";
-    private SizesAvailable: IFile = {};
+    private FileMimeType: string = "";
+    private SizesAvailable: { [size: string]: string } = {}; // Path
+    private LastRequested: Date = new Date();
 
-    /**
-     *
-     */
-    private constructor() { }
+    constructor() { }
 
-    Create(
+    public Create(
         values: { [key: string]: any; })
         : Image {
 
         let image: Image = new Image();
 
         image.FileName = values.FileName;
-        image.FileExtension = values.FileExtension;
+        image.FileMimeType = values.FileMimeType;
         image.SizesAvailable = values.SizesAvailable;
 
         if (!image.FileName || !image.FileName || !image.FileName) {
@@ -32,21 +26,26 @@ class Image implements IDatabaseModel {
         return image;
     }
 
-    Apply(
+    public Apply(
         values: { [key: string]: any; })
-        : Image {
+        : void {
 
-        let image = new Image();
-
-        
-
-        return image;
+        this.FileName = values.FileName;
+        this.FileMimeType = values.FileMimeType;
+        this.SizesAvailable = values.SizesAvailable;
     }
 
-    Update(
+    public Update(
         values: { [key: string]: any; })
-        {
+        : void {
 
+        this.FileName = values.FileName;
+        this.FileMimeType = values.FileMimeType;
+        this.SizesAvailable = values.SizesAvailable;
+
+        if (!this.FileName || !this.FileName || !this.FileName) {
+            throw new Error("Missing property");
+        }
     }
 }
 

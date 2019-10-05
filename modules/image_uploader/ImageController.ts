@@ -1,19 +1,26 @@
 import express from "express";
 import multer from "multer";
 import { MulterStorage } from "./";
+import { Image } from "./";
 import { Mongodb } from "../database";
 
 class ImageController {
-
+    private CollectionName = "images";
+    private Database: Mongodb;
     private FileMiddleware = MulterStorage.GetMiddleware();
-    private SingleFileUploader = this.FileMiddleware.single("image");
-    private MultileFilesUploader = this.FileMiddleware.array("images");
-    private Router = express.Router();
+    private SingleFileUpload = this.FileMiddleware.single("image");
+    private MultileFilesUpload = this.FileMiddleware.array("images");
+    private _Router = express.Router();
 
-    constructor() {
+    constructor(database: Mongodb) {
+        this.Database = database;
         this.Router.get("/:imagename", this.GetImage)
         this.Router.post("/upload", this.UploadImage)
         this.Router.post("/uploads", this.UploadImages)
+    }
+
+    public get Router() {
+        return this._Router;
     }
 
     private GetImage(
@@ -25,28 +32,46 @@ class ImageController {
         req: express.Request,
         res: express.Response) {
 
-        this.SingleFileUploader(
+        this.SingleFileUpload(
             req,
             res,
-            function (err: Error) {
+            (err: Error) => {
                 if (err instanceof Error) {
-                    res.send(err.message);
+                    return res.send(err.message);
+                } else if (!req.file) {
+                    return res.send("No file received by the server");
                 } else {
-                    const file = req.file;
-                    if (!file) {
-                        res.send("No file received by the server");
-                    } else {
-                        res.send(`${MulterStorage.PathToRoot}/${file.filename}`);
+
+                    let imageData = {
+                        FileName: req.file.filename,
+                        FileExtension: req.file.mimetype,
+                        SizesAvailable: { "original": req.file.path }
                     }
+
+                    let newImage = new Image();
+                    newImage.Create(imageData);
+
+                    this.Database.InsertInCollection(
+                        this.CollectionName,
+                        newImage)
+                        .then((image: any) => {
+                            if (!image) {
+                                throw new Error();
+                            }
+                            res.send(image);
+                        })
+                        .catch((err: Error) => {
+                            res.send(err);
+                        });
                 }
-            })
+            });
     };
 
     private UploadImages(
         req: express.Request,
         res: express.Response) {
 
-        this.MultileFilesUploader(
+        this.MultileFilesUpload(
             req,
             res,
             function (err: Error) {
