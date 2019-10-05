@@ -45,19 +45,16 @@ class ImageController {
             req,
             res,
             async (err: Error) => {
-                console.log(err);
                 let uploadResults: { [image: string]: Image | Error } = {};
 
                 if (!req.file) {
-                    console.log(req.file);
-                    uploadResults["unknown"] = new Error("No file received");
+                    return this.SendResponse(res, 403, { error: "No file received by the server" });
                 } else if (err) {
-                    uploadResults[req.file.filename] = err;
+                    return this.SendResponse(res, 500, { [`${req.file.originalname}`]: err.message });
                 } else {
-                    uploadResults[req.file.filename] = await this.InsertImageInDatabase(req.file);
+                    uploadResults[req.file.originalname] = await this.InsertImageInDatabase(req.file);
+                    return this.SendResponse(res, 200, uploadResults);
                 }
-
-                this.SendResponse(res, uploadResults);
             });
     };
 
@@ -70,15 +67,15 @@ class ImageController {
             req,
             res,
             (err: Error) => {
-                if (err) {
-                    return this.SendResponse(res, err);
-                }
-                else if (!req.files) {
-                    return this.SendResponse(res, new Error("No files received by the server"));
-                } else {
-                    let response = this.InsertImagesInDatabase(req.files);
-                    return this.SendResponse(res, response);
-                }
+                // if (err) {
+                //     return this.SendResponse(res, err);
+                // }
+                // else if (!req.files) {
+                //     return this.SendResponse(res, new Error("No files received by the server"));
+                // } else {
+                //     let response = this.InsertImagesInDatabase(req.files);
+                //     return this.SendResponse(res, response);
+                // }
             });
     };
 
@@ -118,14 +115,11 @@ class ImageController {
 
     private SendResponse(
         res: express.Response,
+        status: number,
         body: any)
         : void {
 
-        if (body instanceof Error) {
-            res.status(500).json(body)
-        } else {
-            res.status(200).json(body);
-        }
+        res.status(status).json(body);
     }
 
 

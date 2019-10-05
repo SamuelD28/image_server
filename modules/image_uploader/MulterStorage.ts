@@ -45,7 +45,7 @@ class MulterStorage {
             storage: storage,
             fileFilter: this.IsFileTypeAccepted,
             limits: {
-                fileSize: 500000, // 5mb
+                fileSize: 5000000, // 5mb
             }
         })
     }
@@ -87,7 +87,9 @@ class MulterStorage {
 
         // NOTE : Should use path constructor instead if hardcoding string
         if (fs.existsSync(`${this.PathToRoot}\\${fileName}`)) {
-            next(Error("Cant upload file"), fileName);
+            // Explicitly append the to the request object.
+            req.file = file;
+            next(Error("File Already uploaded"), fileName);
         } else {
             next(null, fileName);
         }
