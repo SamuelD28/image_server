@@ -87,7 +87,7 @@ class MulterStorage {
 
         // NOTE : Should use path constructor instead if hardcoding string
         if (fs.existsSync(`${this.PathToRoot}\\${fileName}`)) {
-            next(new Error("File already exists"), fileName);
+            next(Error("Cant upload file"), fileName);
         } else {
             next(null, fileName);
         }

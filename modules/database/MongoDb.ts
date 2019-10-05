@@ -38,7 +38,10 @@ class Mongodb {
             if (this.Client === null) {
                 this.Client = await new MongoClient(
                     this.ConnectionString,
-                    { useNewUrlParser: true })
+                    {
+                        useNewUrlParser: true,
+                        useUnifiedTopology: true
+                    })
                     .connect();
             }
 

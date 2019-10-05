@@ -1,51 +1,55 @@
 import { IDatabaseModel } from "../database";
 
-class Image implements IDatabaseModel {
+class Image {
 
-    private FileName: string = "";
+    private _FileName: string = "";
     private FileMimeType: string = "";
-    private SizesAvailable: { [size: string]: string } = {}; // Path
+    private _SizesAvailable: { [size: string]: string; } = {}; // Path
     private LastRequested: Date = new Date();
 
-    constructor() { }
+    constructor(
+        fileName: string,
+        fileMimeType: string,
+        sizesAvailable: { [size: string]: string }
+    ) {
+        this.FileName = fileName;
+        this.FileMimeType = fileMimeType;
+        this.SizesAvailable = sizesAvailable;
+        this.LastRequested = new Date();
+    }
 
-    public Create(
-        values: { [key: string]: any; })
+    public get SizesAvailable(): {
+        [size: string]: string;
+    } {
+        return this._SizesAvailable;
+    }
+
+    public set SizesAvailable(value: {
+        [size: string]: string;
+    }) {
+        this._SizesAvailable = value;
+    }
+
+    public get FileName(): string {
+        return this._FileName;
+    }
+
+    public set FileName(value: string) {
+        this._FileName = value;
+    }
+
+    public Empty()
         : Image {
-
-        let image: Image = new Image();
-
-        image.FileName = values.FileName;
-        image.FileMimeType = values.FileMimeType;
-        image.SizesAvailable = values.SizesAvailable;
-
-        if (!image.FileName || !image.FileName || !image.FileName) {
-            throw new Error("Missing property");
-        }
-
-        return image;
+        return new Image("", "", {});
     }
 
-    public Apply(
+    public Bind(
         values: { [key: string]: any; })
         : void {
-
         this.FileName = values.FileName;
         this.FileMimeType = values.FileMimeType;
         this.SizesAvailable = values.SizesAvailable;
-    }
-
-    public Update(
-        values: { [key: string]: any; })
-        : void {
-
-        this.FileName = values.FileName;
-        this.FileMimeType = values.FileMimeType;
-        this.SizesAvailable = values.SizesAvailable;
-
-        if (!this.FileName || !this.FileName || !this.FileName) {
-            throw new Error("Missing property");
-        }
+        this.LastRequested = values.LastRequested;
     }
 }
 

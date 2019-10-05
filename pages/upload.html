@@ -7,18 +7,13 @@
 </head>
 
 <body>
-    <form action="/upload" enctype="multipart/form-data" method="POST">
+    <form action="/api/upload" enctype="multipart/form-data" method="POST">
         <input type="file" name="image" />
         <input type="submit" value="Upload a file" />
     </form>
-
-    <form action="/uploads" enctype="multipart/form-data" method="POST">
+    <br />
+    <form action="/api/uploads" enctype="multipart/form-data" method="POST">
         Select images: <input type="file" name="images" multiple>
         <input type="submit" value="Upload your files" />
-    </form>
-
-    <form action="/upload/photo" enctype="multipart/form-data" method="POST">
-        <input type="file" name="myImage" accept="image/*" />
-        <input type="submit" value="Upload Photo" />
     </form>
 </body>
