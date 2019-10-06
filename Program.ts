@@ -8,6 +8,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
+import path from "path";
 import { Mongodb } from "./modules/database/Index";
 import ImageController from "./modules/image_uploader/ImageController";
 

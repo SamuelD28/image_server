@@ -1,6 +1,7 @@
 import multer from "multer";
 import fs from "fs";
 import express from "express";
+import path from "path";
 
 /**
  * @description Singleton Class responsible for handling file uploads to the server
@@ -9,6 +10,7 @@ import express from "express";
  */
 class MulterStorage {
 
+    private ServerRoot: string;
     private _PathToRoot: string = "images";
     private _AcceptedMimeTypes: { [index: string]: string } = {
         "image/gif": "gif",
@@ -19,6 +21,11 @@ class MulterStorage {
     };
 
     constructor() {
+        if (require !== undefined && require.main !== undefined) {
+            this.ServerRoot = path.dirname(require.main.filename);
+        } else {
+            throw new Error("Server root path is unknown. Storage is disabled");
+        }
         this.PickDestinationFolder = this.PickDestinationFolder.bind(this);
         this.ExecuteFileValidation = this.ExecuteFileValidation.bind(this);
         this.PickFileName = this.PickFileName.bind(this);
@@ -71,7 +78,8 @@ class MulterStorage {
             fs.mkdirSync(this._PathToRoot);
         }
 
-        next(null, this._PathToRoot);
+        let destinationPath = path.join(this.ServerRoot, this._PathToRoot);
+        next(null, destinationPath);
     }
 
     /**

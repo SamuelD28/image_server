@@ -1,9 +1,9 @@
 import express, { response } from "express";
-import multer from "multer";
+import path from 'path';
 import { MulterStorage } from "./";
 import { Image } from "./";
 import { Mongodb } from "../database";
-import e from "express";
+import { ObjectId } from "bson";
 
 class ImageController {
     private CollectionName = "images";
@@ -23,7 +23,7 @@ class ImageController {
         this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
 
         this.Database = database;
-        this.Router.get("/:imagename", this.GetImage)
+        this.Router.get("/:id", this.GetImage)
         this.Router.post("/upload", this.UploadImage)
         this.Router.post("/uploads", this.UploadImages)
     }
@@ -35,6 +35,23 @@ class ImageController {
     private GetImage(
         req: express.Request,
         res: express.Response) {
+
+        let id: ObjectId = new ObjectId(req.params.id);
+        this.Database.GetDocumentInCollection(
+            this.CollectionName,
+            { _id: id })
+            .then((image) => {
+                if (!image) {
+                    throw new Error();
+                } else {
+                    image.lastrequested = new Date();
+                    
+                    return res.sendFile(image.path);
+                }
+            })
+            .catch((err) => {
+                this.SendResponse(res, 404, { error: err.message })
+            });
     };
 
     private UploadImage(
