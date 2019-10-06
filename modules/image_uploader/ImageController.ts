@@ -18,9 +18,9 @@ class ImageController {
         this.GetImage = this.GetImage.bind(this);
         this.UploadImage = this.UploadImage.bind(this);
         this.UploadImages = this.UploadImages.bind(this);
-        this.InsertImagesInDatabase = this.InsertImagesInDatabase.bind(this);
         this.InsertImageInDatabase = this.InsertImageInDatabase.bind(this);
         this.SendResponse = this.SendResponse.bind(this);
+        this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
 
         this.Database = database;
         this.Router.get("/:imagename", this.GetImage)
@@ -45,22 +45,29 @@ class ImageController {
             req,
             res,
             async (err: Error) => {
-                let uploadResults: { [image: string]: Image | Error } = {};
-
-                if (!req.file && err) {
+                if (err) {
                     return this.SendResponse(res, 403, { error: err.message });
                 }
-                else if (!req.file) {
-                    return this.SendResponse(res, 403, { error: "No file received by the server" });
-                }
-                else if (err) {
-                    return this.SendResponse(res, 500, { [`${req.file.originalname}`]: err.message });
-                } else {
-                    uploadResults[req.file.originalname] = await this.InsertImageInDatabase(req.file);
-                    return this.SendResponse(res, 200, uploadResults);
-                }
+
+                let uploadResult: Image = await this.ParseFileUploadResult(req.file);
+                return this.SendResponse(res, 200, uploadResult);
             });
     };
+
+    private async ParseFileUploadResult(
+        file: any) {
+
+        let uploadResult: Image;
+        let image: Image = Image.BindMulterFile(file);
+        if (image.error !== undefined) {
+            uploadResult = image;
+        }
+        else {
+            uploadResult = await this.InsertImageInDatabase(image);
+        }
+
+        return uploadResult;
+    }
 
     private UploadImages(
         req: express.Request,
@@ -69,51 +76,38 @@ class ImageController {
         this.UploadMultipleFiles(
             req,
             res,
-            (err: Error) => {
+            async (err: Error) => {
                 if (err) {
-                    return this.SendResponse(res, err);
+                    return this.SendResponse(res, 500, { error: err.message });
                 }
-                else if (!req.files) {
-                    return this.SendResponse(res, new Error("No files received by the server"));
-                } else {
-                    let response = this.InsertImagesInDatabase(req.files);
-                    return this.SendResponse(res, response);
+
+                let files = req.files ? req.files : [];
+                let uploadResults: Image[] = [];
+
+                for (let i = 0; i < files.length; i++) {
+                    let uploadResult = await this.ParseFileUploadResult(files[i]);
+                    uploadResults.push(uploadResult);
                 }
+
+                return this.SendResponse(res, 200, uploadResults);
             });
     };
 
-    private InsertImagesInDatabase(
-        files: Express.Multer.File[])
-        : { [image: string]: Image | Error } {
-
-        let results: { [image: string]: Image | Error } = {};
-
-        files.forEach(async file => {
-            results[file.filename] = await this.InsertImageInDatabase(file);
-        });
-
-        return results;
-    }
-
     private async InsertImageInDatabase(
-        file: Express.Multer.File
-    ): Promise<Image | Error> {
-
-        let result: Image | Error;
-
-        let newImage = new Image(
-            file.filename,
-            file.mimetype,
-            { "original": file.path }
-        );
+        image: Image
+    ): Promise<Image> {
 
         let savedImage = await this.Database.InsertInCollection(
             this.CollectionName,
-            newImage
+            image
         );
 
-        result = (savedImage) ? savedImage.ops[0] : new Error();
-        return result;
+        if (savedImage) {
+            return savedImage.ops[0];
+        } else {
+            image.error = "Can't save image in database";
+            return image;
+        }
     }
 
     private SendResponse(

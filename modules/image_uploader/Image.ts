@@ -1,55 +1,51 @@
 import { IDatabaseModel } from "../database";
+import express from "express";
 
-class Image {
+class Image implements Express.Multer.File {
 
-    private _FileName: string = "";
-    private FileMimeType: string = "";
-    private _SizesAvailable: { [size: string]: string; } = {}; // Path
-    private LastRequested: Date = new Date();
+    public fieldname: string = "";
+    public originalname: string = "";
+    public encoding: string = "";
+    public mimetype: string = "";
+    public size: number = 0;
+    public destination: string = "";
+    public location: string = "";
+    public filename: string = "";
+    public path: string = "";
+    public buffer: Buffer = new Buffer("");
+    public error: string | undefined;
+    public resizesavailable: string[] = [];
+    public lastrequested: Date = new Date();
+    public createdat: Date = new Date();
 
-    constructor(
-        fileName: string,
-        fileMimeType: string,
-        sizesAvailable: { [size: string]: string }
-    ) {
-        this.FileName = fileName;
-        this.FileMimeType = fileMimeType;
-        this.SizesAvailable = sizesAvailable;
-        this.LastRequested = new Date();
-    }
+    private constructor() { }
 
-    public get SizesAvailable(): {
-        [size: string]: string;
-    } {
-        return this._SizesAvailable;
-    }
-
-    public set SizesAvailable(value: {
-        [size: string]: string;
-    }) {
-        this._SizesAvailable = value;
-    }
-
-    public get FileName(): string {
-        return this._FileName;
-    }
-
-    public set FileName(value: string) {
-        this._FileName = value;
-    }
-
-    public Empty()
+    public static BindMulterFile(
+        p_file: { [index: string]: string })
         : Image {
-        return new Image("", "", {});
-    }
 
-    public Bind(
-        values: { [key: string]: any; })
-        : void {
-        this.FileName = values.FileName;
-        this.FileMimeType = values.FileMimeType;
-        this.SizesAvailable = values.SizesAvailable;
-        this.LastRequested = values.LastRequested;
+        let image: Image = new Image();
+
+        // Required attributes
+        image.fieldname = p_file["fieldname"];
+        image.originalname = p_file["originalname"];
+        image.encoding = p_file["encoding"];
+        image.mimetype = p_file["mimetype"];
+        image.error = p_file["error"];
+
+        // Optional attributes
+        image.size = (p_file["size"]) ? +p_file["size"] : 0;
+        image.destination = p_file["destination"] || "";
+        image.location = p_file["location"] || "";
+        image.filename = p_file["filename"] || "";
+        image.path = p_file["path"] || "";
+
+        // Self initialised attributes
+        image.buffer = new Buffer("");
+        image.resizesavailable = [];
+        image.lastrequested = new Date();
+        image.createdat = new Date();
+        return image;
     }
 }
 

@@ -1,5 +1,6 @@
 import multer from "multer";
 import fs from "fs";
+import express from "express";
 
 /**
  * @description Singleton Class responsible for handling file uploads to the server
@@ -19,8 +20,10 @@ class MulterStorage {
 
     constructor() {
         this.PickDestinationFolder = this.PickDestinationFolder.bind(this);
-        this.IsFileTypeAccepted = this.IsFileTypeAccepted.bind(this);
+        this.ExecuteFileValidation = this.ExecuteFileValidation.bind(this);
         this.PickFileName = this.PickFileName.bind(this);
+        this.DoesFileAlreadyExists = this.DoesFileAlreadyExists.bind(this);
+        this.AddFileToRequest = this.AddFileToRequest.bind(this);
     }
 
     /**
@@ -43,10 +46,11 @@ class MulterStorage {
 
         return multer({
             storage: storage,
-            fileFilter: this.IsFileTypeAccepted,
-            limits: {
-                fileSize: 5000000,
-            }
+            fileFilter: this.ExecuteFileValidation,
+            // NOTE : Should find a way to catch filesize in file filter function
+            // limits: {
+            //     fileSize: 5000000,
+            // },
         })
     }
 
@@ -84,15 +88,7 @@ class MulterStorage {
         next: (err: Error | null, fileName: string) => void) {
 
         let fileName = `${file.originalname}`;
-
-        // NOTE : Should use path constructor instead if hardcoding string
-        if (fs.existsSync(`${this.PathToRoot}\\${fileName}`)) {
-            // Explicitly append the to the request object.
-            req.file = file;
-            next(Error("File Already uploaded"), fileName);
-        } else {
-            next(null, fileName);
-        }
+        return next(null, fileName);
     }
 
     /**
@@ -103,16 +99,48 @@ class MulterStorage {
      * @param file Multer file beeing uploaded
      * @param next Callback function to pass the information to the next handler.
      */
-    private IsFileTypeAccepted(
-        req: Express.Request,
-        file: Express.Multer.File,
+    private ExecuteFileValidation(
+        req: express.Request,
+        file: any,
         next: (err: Error | null, isAccepted: boolean) => void) {
 
-        if (this._AcceptedMimeTypes[file.mimetype] !== undefined) {
-            return next(null, true);
-        } else {
-            return next(null, false);
+        // console.log(req.headers["content-length"]);
+
+        let fileName = `${file.originalname}`;
+
+        if (this.DoesFileAlreadyExists(fileName)) {
+            file["error"] = "File Already exists";
         }
+        else if (this._AcceptedMimeTypes[file.mimetype] === undefined) {
+            file["error"] = "File Mimetype not handled";
+        }
+        else {
+            file["error"] = undefined;
+        }
+
+        if ((file["error"]) === undefined) {
+            return next(null, true)
+        } else {
+            this.AddFileToRequest(req, file);
+            req.file = file;
+            return next(null, false)
+        }
+    }
+
+    private DoesFileAlreadyExists(
+        fileName: string)
+        : boolean {
+        return fs.existsSync(`${this.PathToRoot}\\${fileName}`);
+    }
+
+    private AddFileToRequest(
+        req: Express.Request,
+        file: Express.Multer.File)
+        : void {
+        if (!req.files) {
+            req.files = new Array();
+        }
+        req.files.push(file);
     }
 }
 
