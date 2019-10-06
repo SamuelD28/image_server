@@ -47,9 +47,13 @@ class ImageController {
             async (err: Error) => {
                 let uploadResults: { [image: string]: Image | Error } = {};
 
-                if (!req.file) {
+                if (!req.file && err) {
+                    return this.SendResponse(res, 403, { error: err.message });
+                }
+                else if (!req.file) {
                     return this.SendResponse(res, 403, { error: "No file received by the server" });
-                } else if (err) {
+                }
+                else if (err) {
                     return this.SendResponse(res, 500, { [`${req.file.originalname}`]: err.message });
                 } else {
                     uploadResults[req.file.originalname] = await this.InsertImageInDatabase(req.file);
@@ -62,20 +66,19 @@ class ImageController {
         req: express.Request,
         res: express.Response) {
 
-
         this.UploadMultipleFiles(
             req,
             res,
             (err: Error) => {
-                // if (err) {
-                //     return this.SendResponse(res, err);
-                // }
-                // else if (!req.files) {
-                //     return this.SendResponse(res, new Error("No files received by the server"));
-                // } else {
-                //     let response = this.InsertImagesInDatabase(req.files);
-                //     return this.SendResponse(res, response);
-                // }
+                if (err) {
+                    return this.SendResponse(res, err);
+                }
+                else if (!req.files) {
+                    return this.SendResponse(res, new Error("No files received by the server"));
+                } else {
+                    let response = this.InsertImagesInDatabase(req.files);
+                    return this.SendResponse(res, response);
+                }
             });
     };
 

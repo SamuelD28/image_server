@@ -45,7 +45,7 @@ class MulterStorage {
             storage: storage,
             fileFilter: this.IsFileTypeAccepted,
             limits: {
-                fileSize: 5000000, // 5mb
+                fileSize: 5000000,
             }
         })
     }
