@@ -4,7 +4,7 @@ import { MulterStorage } from "./";
 import { Image } from "./";
 import { Mongodb } from "../database";
 import { ObjectId } from "bson";
-import fs from "fs";
+import sizeOf from "image-size";
 import jimp from "jimp";
 
 class ImageController {
@@ -51,11 +51,9 @@ class ImageController {
 
         if (this.QueryContainsSpecifiedNumberKeys(req.query, "size")) {
 
-            // Check if transform available. Reading huge file cost in resource
             let scalingRatio: number = +req.query.size / 100;
-            let jimpImage = await jimp.read(image.path);
-            let adjustedHeight = jimpImage.getHeight() * scalingRatio;
-            let adjustedWidth = jimpImage.getWidth() * scalingRatio;
+            let adjustedHeight = Math.ceil(image.height * scalingRatio);
+            let adjustedWidth = Math.ceil(image.width * scalingRatio);
 
             return this.SendImageWithTransformation(
                 adjustedWidth,
@@ -145,7 +143,8 @@ class ImageController {
         resizedSavePath: string) {
 
         let jimpImage = await jimp.read(originalPath);
-        await jimpImage.resize(imageWidth, imageHeight)
+        await jimpImage
+            .resize(imageWidth, imageHeight)
             .writeAsync(resizedSavePath);
     }
 
@@ -200,6 +199,9 @@ class ImageController {
             uploadResult = image;
         }
         else {
+            let imageDimension = sizeOf.imageSize(image.path);
+            image.width = imageDimension.width || 0;
+            image.height = imageDimension.height || 0;
             uploadResult = await this.InsertImageInDatabase(image);
         }
 

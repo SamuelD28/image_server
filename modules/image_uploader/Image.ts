@@ -13,11 +13,13 @@ class Image implements Express.Multer.File {
     public filename: string = "";
     public path: string = "";
     public buffer: Buffer = new Buffer("");
+    public width : number = 0;
+    public height : number = 0;
     public error: string | undefined;
     public resizesavailable: string[] = [];
     public lastrequested: Date = new Date();
     public createdat: Date = new Date();
-
+    
     private constructor() { }
 
     public static BindMulterFile(
