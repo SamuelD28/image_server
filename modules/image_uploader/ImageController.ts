@@ -4,6 +4,7 @@ import { MulterStorage } from "./";
 import { Image } from "./";
 import { Mongodb } from "../database";
 import { ObjectId } from "bson";
+import fs from "fs";
 import jimp from "jimp";
 
 class ImageController {
@@ -22,7 +23,6 @@ class ImageController {
         this.InsertImageInDatabase = this.InsertImageInDatabase.bind(this);
         this.SendResponse = this.SendResponse.bind(this);
         this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
-        this.QueryContainImageSize = this.QueryContainImageSize.bind(this);
 
         this.Database = database;
         this.Router.get("/:id", this.GetImage)
@@ -38,6 +38,7 @@ class ImageController {
         req: express.Request,
         res: express.Response) {
 
+        // Error handling when id is wrong
         let id: ObjectId = new ObjectId(req.params.id);
         let image = await this.Database.GetDocumentInCollection(
             this.CollectionName,
@@ -48,50 +49,127 @@ class ImageController {
             return this.SendResponse(res, 404, { error: "No image found" });
         }
 
-        let imagePath: String;
+        if (this.QueryContainsSpecifiedNumberKeys(req.query, "size")) {
 
-        if (this.QueryContainImageSize(req.query)) {
-            let imageWidth: number = +req.query.width;
-            let imageHeight: number = +req.query.height;
-            let imageSize: string = `w${imageWidth}h${imageHeight}`;
-            let resizeImagePath = path.join(image.destination, imageSize + image.filename);
+            // Check if transform available. Reading huge file cost in resource
+            let scalingRatio: number = +req.query.size / 100;
+            let jimpImage = await jimp.read(image.path);
+            let adjustedHeight = jimpImage.getHeight() * scalingRatio;
+            let adjustedWidth = jimpImage.getWidth() * scalingRatio;
 
-            if (image.resizesavailable.includes(imageSize)) {
-                console.log("Included already");
-                return res.sendFile(resizeImagePath);
-            } else {
-                console.log("rezising");
-                let jimpImage = await jimp.read(image.path);
-                jimpImage
-                    .resize(imageWidth, imageHeight)
-                    .write(resizeImagePath);
-
-                image.resizesavailable.push(imageSize);
-                await this.Database.UpdateInCollection(
-                    this.CollectionName,
-                    { _id: id },
-                    { $set: image }
-                );
-
-                return res.sendFile(resizeImagePath);
-            }
+            return this.SendImageWithTransformation(
+                adjustedWidth,
+                adjustedHeight,
+                image,
+                res
+            );
         }
+        else if (this.QueryContainsSpecifiedNumberKeys(req.query, "height", "width")) {
 
-        image.lastrequested = new Date();
-        await this.Database.UpdateInCollection(
-            this.CollectionName,
-            { _id: id },
-            { $set: image }
-        );
-        return res.sendFile(image.path);
+            return this.SendImageWithTransformation(
+                +req.query.width,
+                +req.query.height,
+                image,
+                res
+            );
+        } else {
+
+            return this.SendImage(image, image.path, res);
+        }
     }
 
-    private QueryContainImageSize(
-        query: { [index: string]: any })
-        : boolean {
-        let imageHeight: any = query.height;
-        let imageWidth: any = query.width;
-        return (imageHeight && imageWidth && !isNaN(imageHeight) && !isNaN(imageWidth));
+    private async SendImageWithTransformation(
+        imageWidth: number,
+        imageHeight: number,
+        image: { [key: string]: any; },
+        res: express.Response) {
+
+        let imageDimensions: string = this.CreateImageDimensions(imageWidth, imageHeight);
+        let desiredDimensionPath = this.GetDesiredDimensionPath(imageDimensions, image);
+
+        if (desiredDimensionPath === null) {
+
+            desiredDimensionPath = this.CreateDesiredDimensionPath(imageDimensions, image);
+            await this.CreateResizedImageVersion(
+                image.path,
+                imageWidth,
+                imageHeight,
+                desiredDimensionPath
+            );
+            image.resizesavailable.push({ dimensions: imageDimensions, path: desiredDimensionPath });
+        }
+
+        return this.SendImage(image, desiredDimensionPath, res);
+    }
+
+    private SendImage(
+        image: { [key: string]: any; },
+        imagePath: string,
+        res: express.Response
+    ) {
+        image.lastrequested = new Date();
+        this.SaveImageChanges(image);
+        return res.sendFile(imagePath);
+    }
+
+    private CreateDesiredDimensionPath(
+        imageDimensions: string,
+        image: { [key: string]: any; }) {
+
+        return path.join(image.destination, imageDimensions + image.filename);
+    }
+
+    private GetDesiredDimensionPath(
+        imageDimensions: string,
+        image: { [key: string]: any; })
+        : string | null {
+
+        let desiredImageDimension = image.resizesavailable.find((i: any) => i.dimensions === imageDimensions);
+        if (desiredImageDimension !== undefined) {
+            return desiredImageDimension.path;
+        } else {
+            return null;
+        }
+    }
+
+    private CreateImageDimensions(
+        imageWidth: number,
+        imageHeight: number): string {
+        return `w${imageWidth}h${imageHeight}`;
+    }
+
+    private async CreateResizedImageVersion(
+        originalPath: string,
+        imageWidth: number,
+        imageHeight: number,
+        resizedSavePath: string) {
+
+        let jimpImage = await jimp.read(originalPath);
+        await jimpImage.resize(imageWidth, imageHeight)
+            .writeAsync(resizedSavePath);
+    }
+
+    private async SaveImageChanges(
+        image: { [key: string]: any; }) {
+
+        await this.Database.UpdateInCollection(
+            this.CollectionName,
+            { _id: image._id },
+            { $set: image }
+        );
+    }
+
+    private QueryContainsSpecifiedNumberKeys(
+        query: { [index: string]: any },
+        ...keys: string[]) {
+
+        let containsAllKeys = true;
+        keys.forEach((key) => {
+            if (isNaN(query[key])) {
+                containsAllKeys = false;
+            }
+        });
+        return containsAllKeys;
     }
 
     private UploadImage(
