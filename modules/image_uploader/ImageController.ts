@@ -54,19 +54,24 @@ class ImageController {
             let imageWidth: number = +req.query.width;
             let imageHeight: number = +req.query.height;
             let imageSize: string = `w${imageWidth}h${imageHeight}`;
-
             let resizeImagePath = path.join(image.destination, imageSize + image.filename);
 
             if (image.resizesavailable.includes(imageSize)) {
-                console.log("include");
+                console.log("Included already");
                 return res.sendFile(resizeImagePath);
             } else {
-
-                console.log("resizing");
+                console.log("rezising");
                 let jimpImage = await jimp.read(image.path);
                 jimpImage
                     .resize(imageWidth, imageHeight)
-                    .write(resizeImagePath)
+                    .write(resizeImagePath);
+
+                image.resizesavailable.push(imageSize);
+                await this.Database.UpdateInCollection(
+                    this.CollectionName,
+                    { _id: id },
+                    { $set: image }
+                );
 
                 return res.sendFile(resizeImagePath);
             }
