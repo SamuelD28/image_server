@@ -22,7 +22,7 @@ const Database: Mongodb = new Mongodb(<string>process.env.MONGODB_URI, "files");
 
 App.use(bodyParser.urlencoded({ extended: true }));
 
-App.use("/api", new ImageController(Database).Router);
+App.use("/images", new ImageController(Database).Router);
 
 App.get("/", (req, res) => {
     res.sendFile(__dirname + "/pages/upload.html");

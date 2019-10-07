@@ -4,6 +4,7 @@ import { MulterStorage } from "./";
 import { Image } from "./";
 import { Mongodb } from "../database";
 import { ObjectId } from "bson";
+import jimp from "jimp";
 
 class ImageController {
     private CollectionName = "images";
@@ -21,6 +22,7 @@ class ImageController {
         this.InsertImageInDatabase = this.InsertImageInDatabase.bind(this);
         this.SendResponse = this.SendResponse.bind(this);
         this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
+        this.QueryContainImageSize = this.QueryContainImageSize.bind(this);
 
         this.Database = database;
         this.Router.get("/:id", this.GetImage)
@@ -32,31 +34,65 @@ class ImageController {
         return this._Router;
     }
 
-    private GetImage(
+    private async GetImage(
         req: express.Request,
         res: express.Response) {
 
         let id: ObjectId = new ObjectId(req.params.id);
-        this.Database.GetDocumentInCollection(
+        let image = await this.Database.GetDocumentInCollection(
             this.CollectionName,
-            { _id: id })
-            .then((image) => {
-                if (!image) {
-                    throw new Error();
-                } else {
-                    image.lastrequested = new Date();
-                    
-                    return res.sendFile(image.path);
-                }
-            })
-            .catch((err) => {
-                this.SendResponse(res, 404, { error: err.message })
-            });
-    };
+            { _id: id }
+        );
+
+        if (!image) {
+            return this.SendResponse(res, 404, { error: "No image found" });
+        }
+
+        let imagePath: String;
+
+        if (this.QueryContainImageSize(req.query)) {
+            let imageWidth: number = +req.query.width;
+            let imageHeight: number = +req.query.height;
+            let imageSize: string = `w${imageWidth}h${imageHeight}`;
+
+            let resizeImagePath = path.join(image.destination, imageSize + image.filename);
+
+            if (image.resizesavailable.includes(imageSize)) {
+                console.log("include");
+                return res.sendFile(resizeImagePath);
+            } else {
+
+                console.log("resizing");
+                let jimpImage = await jimp.read(image.path);
+                jimpImage
+                    .resize(imageWidth, imageHeight)
+                    .write(resizeImagePath)
+
+                return res.sendFile(resizeImagePath);
+            }
+        }
+
+        image.lastrequested = new Date();
+        await this.Database.UpdateInCollection(
+            this.CollectionName,
+            { _id: id },
+            { $set: image }
+        );
+        return res.sendFile(image.path);
+    }
+
+    private QueryContainImageSize(
+        query: { [index: string]: any })
+        : boolean {
+        let imageHeight: any = query.height;
+        let imageWidth: any = query.width;
+        return (imageHeight && imageWidth && !isNaN(imageHeight) && !isNaN(imageWidth));
+    }
 
     private UploadImage(
         req: express.Request,
-        res: express.Response) {
+        res: express.Response)
+        : void {
 
         this.UploadOneFile(
             req,
@@ -72,7 +108,8 @@ class ImageController {
     };
 
     private async ParseFileUploadResult(
-        file: any) {
+        file: any)
+        : Promise<Image> {
 
         let uploadResult: Image;
         let image: Image = Image.BindMulterFile(file);
@@ -88,7 +125,8 @@ class ImageController {
 
     private UploadImages(
         req: express.Request,
-        res: express.Response) {
+        res: express.Response)
+        : void {
 
         this.UploadMultipleFiles(
             req,

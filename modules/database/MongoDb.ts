@@ -198,14 +198,14 @@ class Mongodb {
      */
     public UpdateInCollection(
         name: string,
-        predicate: object, data: object)
+        predicate: object,
+        data: object)
         : Promise<{ [key: string]: any }> {
 
         return new Promise((resolve) => {
             this.GetCollection(name)
                 .then(async (collection) => {
                     let result = await collection.updateOne(predicate, data);
-                    console.log(result);
                     resolve(result);
                 });
         });
