@@ -1,6 +1,6 @@
-import multer from "multer";
-import fs from "fs";
 import express from "express";
+import fs from "fs";
+import multer from "multer";
 import path from "path";
 
 /**
@@ -17,7 +17,7 @@ class MulterStorage {
         "image/jpeg": "jpg",
         "image/png": "png",
         "image/tiff": "tiff",
-        "image/svg": "svg"
+        "image/svg": "svg",
     };
 
     constructor() {
@@ -46,19 +46,19 @@ class MulterStorage {
     * the files sent by the client into the express request object.
     */
     public GetMiddleware(): multer.Instance {
-        var storage = multer.diskStorage({
+        const storage = multer.diskStorage({
             destination: this.PickDestinationFolder,
-            filename: this.PickFileName
+            filename: this.PickFileName,
         });
 
         return multer({
-            storage: storage,
+            storage,
             fileFilter: this.ExecuteFileValidation,
             // NOTE : Should find a way to catch filesize in file filter function
             // limits: {
             //     fileSize: 5000000,
             // },
-        })
+        });
     }
 
     /**
@@ -78,7 +78,7 @@ class MulterStorage {
             fs.mkdirSync(this._PathToRoot);
         }
 
-        let destinationPath = path.join(this.ServerRoot, this._PathToRoot);
+        const destinationPath = path.join(this.ServerRoot, this._PathToRoot);
         next(null, destinationPath);
     }
 
@@ -95,7 +95,7 @@ class MulterStorage {
         file: Express.Multer.File,
         next: (err: Error | null, fileName: string) => void) {
 
-        let fileName = `${file.originalname}`;
+        const fileName = `${file.originalname}`;
         return next(null, fileName);
     }
 
@@ -114,24 +114,22 @@ class MulterStorage {
 
         // console.log(req.headers["content-length"]);
 
-        let fileName = `${file.originalname}`;
+        const fileName = `${file.originalname}`;
 
         if (this.DoesFileAlreadyExists(fileName)) {
-            file["error"] = "File Already exists";
-        }
-        else if (this._AcceptedMimeTypes[file.mimetype] === undefined) {
-            file["error"] = "File Mimetype not handled";
-        }
-        else {
-            file["error"] = undefined;
+            file.error = "File Already exists";
+        } else if (this._AcceptedMimeTypes[file.mimetype] === undefined) {
+            file.error = "File Mimetype not handled";
+        } else {
+            file.error = undefined;
         }
 
-        if ((file["error"]) === undefined) {
-            return next(null, true)
+        if ((file.error) === undefined) {
+            return next(null, true);
         } else {
             this.AddFileToRequest(req, file);
             req.file = file;
-            return next(null, false)
+            return next(null, false);
         }
     }
 

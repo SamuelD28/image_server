@@ -1,4 +1,4 @@
-import MulterStorage from "./MulterStorage";
 import Image from "./Image";
+import MulterStorage from "./MulterStorage";
 
-export { MulterStorage, Image }
+export { MulterStorage, Image };

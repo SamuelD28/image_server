@@ -1,7 +1,33 @@
-import { IDatabaseModel } from "../database";
-import express from "express";
 
 class Image implements Express.Multer.File {
+
+    public static BindMulterFile(
+        p_file: { [index: string]: string })
+        : Image {
+
+        const image: Image = new Image();
+
+        // Required attributes
+        image.fieldname = p_file.fieldname;
+        image.originalname = p_file.originalname;
+        image.encoding = p_file.encoding;
+        image.mimetype = p_file.mimetype;
+        image.error = p_file.error;
+
+        // Optional attributes
+        image.size = (p_file.size) ? +p_file.size : 0;
+        image.destination = p_file.destination || "";
+        image.location = p_file.location || "";
+        image.filename = p_file.filename || "";
+        image.path = p_file.path || "";
+
+        // Self initialised attributes
+        image.buffer = new Buffer("");
+        image.resizesavailable = [];
+        image.lastrequested = new Date();
+        image.createdat = new Date();
+        return image;
+    }
 
     public fieldname: string = "";
     public originalname: string = "";
@@ -19,34 +45,6 @@ class Image implements Express.Multer.File {
     public createdat: Date = new Date();
 
     private constructor() { }
-
-    public static BindMulterFile(
-        p_file: { [index: string]: string })
-        : Image {
-
-        let image: Image = new Image();
-
-        // Required attributes
-        image.fieldname = p_file["fieldname"];
-        image.originalname = p_file["originalname"];
-        image.encoding = p_file["encoding"];
-        image.mimetype = p_file["mimetype"];
-        image.error = p_file["error"];
-
-        // Optional attributes
-        image.size = (p_file["size"]) ? +p_file["size"] : 0;
-        image.destination = p_file["destination"] || "";
-        image.location = p_file["location"] || "";
-        image.filename = p_file["filename"] || "";
-        image.path = p_file["path"] || "";
-
-        // Self initialised attributes
-        image.buffer = new Buffer("");
-        image.resizesavailable = [];
-        image.lastrequested = new Date();
-        image.createdat = new Date();
-        return image;
-    }
 }
 
 export default Image;

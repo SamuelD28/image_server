@@ -1,4 +1,4 @@
-import Mongodb from "./MongoDb";
 import IDatabaseModel from "./IDatabaseModel";
+import Mongodb from "./MongoDb";
 
-export { Mongodb, IDatabaseModel }
+export { Mongodb, IDatabaseModel };

@@ -1,11 +1,11 @@
-import express, { response } from "express";
-import path from 'path';
-import MulterStorage from "./MulterStorage";
-import Image from "./Image";
-import Mongodb from "../database/MongoDb";
 import { ObjectId } from "bson";
+import express, { response } from "express";
 import fs from "fs";
 import jimp from "jimp";
+import path from "path";
+import Mongodb from "../database/MongoDb";
+import Image from "./Image";
+import MulterStorage from "./MulterStorage";
 
 class ImageController {
     private CollectionName = "images";
@@ -25,9 +25,9 @@ class ImageController {
         this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
 
         this.Database = database;
-        this.Router.get("/:id", this.GetImage)
-        this.Router.post("/upload", this.UploadImage)
-        this.Router.post("/uploads", this.UploadImages)
+        this.Router.get("/:id", this.GetImage);
+        this.Router.post("/upload", this.UploadImage);
+        this.Router.post("/uploads", this.UploadImages);
     }
 
     public get Router() {
@@ -39,10 +39,10 @@ class ImageController {
         res: express.Response) {
 
         // Error handling when id is wrong
-        let id: ObjectId = new ObjectId(req.params.id);
-        let image = await this.Database.GetDocumentInCollection(
+        const id: ObjectId = new ObjectId(req.params.id);
+        const image = await this.Database.GetDocumentInCollection(
             this.CollectionName,
-            { _id: id }
+            { _id: id },
         );
 
         if (!image) {
@@ -52,25 +52,24 @@ class ImageController {
         if (this.QueryContainsSpecifiedNumberKeys(req.query, "size")) {
 
             // Check if transform available. Reading huge file cost in resource
-            let scalingRatio: number = +req.query.size / 100;
-            let jimpImage = await jimp.read(image.path);
-            let adjustedHeight = jimpImage.getHeight() * scalingRatio;
-            let adjustedWidth = jimpImage.getWidth() * scalingRatio;
+            const scalingRatio: number = +req.query.size / 100;
+            const jimpImage = await jimp.read(image.path);
+            const adjustedHeight = jimpImage.getHeight() * scalingRatio;
+            const adjustedWidth = jimpImage.getWidth() * scalingRatio;
 
             return this.SendImageWithTransformation(
                 adjustedWidth,
                 adjustedHeight,
                 image,
-                res
+                res,
             );
-        }
-        else if (this.QueryContainsSpecifiedNumberKeys(req.query, "height", "width")) {
+        } else if (this.QueryContainsSpecifiedNumberKeys(req.query, "height", "width")) {
 
             return this.SendImageWithTransformation(
                 +req.query.width,
                 +req.query.height,
                 image,
-                res
+                res,
             );
         } else {
 
@@ -84,7 +83,7 @@ class ImageController {
         image: { [key: string]: any; },
         res: express.Response) {
 
-        let imageDimensions: string = this.CreateImageDimensions(imageWidth, imageHeight);
+        const imageDimensions: string = this.CreateImageDimensions(imageWidth, imageHeight);
         let desiredDimensionPath = this.GetDesiredDimensionPath(imageDimensions, image);
 
         if (desiredDimensionPath === null) {
@@ -94,7 +93,7 @@ class ImageController {
                 image.path,
                 imageWidth,
                 imageHeight,
-                desiredDimensionPath
+                desiredDimensionPath,
             );
             image.resizesavailable.push({ dimensions: imageDimensions, path: desiredDimensionPath });
         }
@@ -105,7 +104,7 @@ class ImageController {
     private SendImage(
         image: { [key: string]: any; },
         imagePath: string,
-        res: express.Response
+        res: express.Response,
     ) {
         image.lastrequested = new Date();
         this.SaveImageChanges(image);
@@ -124,7 +123,7 @@ class ImageController {
         image: { [key: string]: any; })
         : string | null {
 
-        let desiredImageDimension = image.resizesavailable.find((i: any) => i.dimensions === imageDimensions);
+        const desiredImageDimension = image.resizesavailable.find((i: any) => i.dimensions === imageDimensions);
         if (desiredImageDimension !== undefined) {
             return desiredImageDimension.path;
         } else {
@@ -144,7 +143,7 @@ class ImageController {
         imageHeight: number,
         resizedSavePath: string) {
 
-        let jimpImage = await jimp.read(originalPath);
+        const jimpImage = await jimp.read(originalPath);
         await jimpImage.resize(imageWidth, imageHeight)
             .writeAsync(resizedSavePath);
     }
@@ -155,7 +154,7 @@ class ImageController {
         await this.Database.UpdateInCollection(
             this.CollectionName,
             { _id: image._id },
-            { $set: image }
+            { $set: image },
         );
     }
 
@@ -185,21 +184,20 @@ class ImageController {
                     return this.SendResponse(res, 403, { error: err.message });
                 }
 
-                let uploadResult: Image = await this.ParseFileUploadResult(req.file);
+                const uploadResult: Image = await this.ParseFileUploadResult(req.file);
                 return this.SendResponse(res, 200, uploadResult);
             });
-    };
+    }
 
     private async ParseFileUploadResult(
         file: any)
         : Promise<Image> {
 
         let uploadResult: Image;
-        let image: Image = Image.BindMulterFile(file);
+        const image: Image = Image.BindMulterFile(file);
         if (image.error !== undefined) {
             uploadResult = image;
-        }
-        else {
+        } else {
             uploadResult = await this.InsertImageInDatabase(image);
         }
 
@@ -219,25 +217,25 @@ class ImageController {
                     return this.SendResponse(res, 500, { error: err.message });
                 }
 
-                let files = req.files ? req.files : [];
-                let uploadResults: Image[] = [];
+                const files = req.files ? req.files : [];
+                const uploadResults: Image[] = [];
 
                 for (let i = 0; i < files.length; i++) {
-                    let uploadResult = await this.ParseFileUploadResult(files[i]);
+                    const uploadResult = await this.ParseFileUploadResult(files[i]);
                     uploadResults.push(uploadResult);
                 }
 
                 return this.SendResponse(res, 200, uploadResults);
             });
-    };
+    }
 
     private async InsertImageInDatabase(
-        image: Image
+        image: Image,
     ): Promise<Image> {
 
-        let savedImage = await this.Database.InsertInCollection(
+        const savedImage = await this.Database.InsertInCollection(
             this.CollectionName,
-            image
+            image,
         );
 
         if (savedImage) {
@@ -256,7 +254,6 @@ class ImageController {
 
         res.status(status).json(body);
     }
-
 
 }
 

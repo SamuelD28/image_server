@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection } from "mongodb";
+import { Collection, Db, MongoClient } from "mongodb";
 
 /**
  * @description Class responsible for communicating with a
@@ -34,13 +34,13 @@ class Mongodb {
         : Promise<Db> {
 
         return new Promise(async (resolve, reject) => {
-            //Lazy initialisation
+            // Lazy initialisation
             if (this.Client === null) {
                 this.Client = await new MongoClient(
                     this.ConnectionString,
                     {
                         useNewUrlParser: true,
-                        useUnifiedTopology: true
+                        useUnifiedTopology: true,
                     })
                     .connect();
             }
@@ -84,7 +84,6 @@ class Mongodb {
         });
     }
 
-
     /**
      * @description Method that create a new collection inside a database
      *
@@ -119,7 +118,7 @@ class Mongodb {
                 .then((collection) => {
                     resolve(collection.findOne(predicate));
                 });
-        })
+        });
     }
 
     /**
@@ -152,18 +151,18 @@ class Mongodb {
      */
     public InsertInCollection(
         name: string,
-        data: object | Array<object>)
+        data: object | object[])
         : Promise<{ [key: string]: any }> {
 
         return new Promise((resolve) => {
             this.GetCollection(name)
                 .then(async (collection) => {
-                    let result =
+                    const result =
                         data instanceof Object
                             ? await collection.insertOne(data)
                             : await collection.insertMany(data);
                     resolve(result);
-                })
+                });
         });
     }
 
@@ -182,7 +181,7 @@ class Mongodb {
         return new Promise((resolve) => {
             this.GetCollection(name)
                 .then(async (collection) => {
-                    let result = await collection.deleteMany(condition);
+                    const result = await collection.deleteMany(condition);
                     resolve(result);
                 });
         });
@@ -205,7 +204,7 @@ class Mongodb {
         return new Promise((resolve) => {
             this.GetCollection(name)
                 .then(async (collection) => {
-                    let result = await collection.updateOne(predicate, data);
+                    const result = await collection.updateOne(predicate, data);
                     resolve(result);
                 });
         });
