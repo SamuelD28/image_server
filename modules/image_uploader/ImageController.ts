@@ -1,8 +1,8 @@
 import express, { response } from "express";
 import path from 'path';
-import { MulterStorage } from "./";
-import { Image } from "./";
-import { Mongodb } from "../database";
+import MulterStorage from "./MulterStorage";
+import Image from "./Image";
+import Mongodb from "../database/MongoDb";
 import { ObjectId } from "bson";
 import fs from "fs";
 import jimp from "jimp";
