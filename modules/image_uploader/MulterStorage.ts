@@ -146,7 +146,10 @@ class MulterStorage {
         if (!req.files) {
             req.files = new Array();
         }
-        req.files.push(file);
+
+        if (req.files instanceof Array) {
+            req.files.push(file);
+        }
     }
 }
 
