@@ -16,7 +16,6 @@ import ImageController from "./modules/image_uploader/ImageController";
 dotenv.config();
 
 const App = express();
-const Host: string = process.env.HOST || "localhost";
 const Port: number = process.env.PORT ? +process.env.PORT : 8080;
 const Database: Mongodb = new Mongodb(<string>process.env.MONGODB_URI, "files");
 
@@ -30,12 +29,11 @@ App.get("/", (req, res) => {
 
 App.listen(
     Port,
-    Host,
     (err) => {
         if (err) {
             console.log("Can't start the server");
         } else {
-            console.log(`Server started\nPORT : ${Port}\nHOST : ${Host}`);
+            console.log(`Server started\nPORT : ${Port}\nHOST : ${process.env.Host}`);
         }
     });
 
