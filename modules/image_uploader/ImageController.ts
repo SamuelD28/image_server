@@ -1,6 +1,7 @@
 import { ObjectId } from "bson";
 import express, { response } from "express";
 import fs from "fs";
+import sizeOf from "image-size";
 import jimp from "jimp";
 import path from "path";
 import Mongodb from "../database/MongoDb";
@@ -51,11 +52,9 @@ class ImageController {
 
         if (this.QueryContainsSpecifiedNumberKeys(req.query, "size")) {
 
-            // Check if transform available. Reading huge file cost in resource
-            const scalingRatio: number = +req.query.size / 100;
-            const jimpImage = await jimp.read(image.path);
-            const adjustedHeight = jimpImage.getHeight() * scalingRatio;
-            const adjustedWidth = jimpImage.getWidth() * scalingRatio;
+            let scalingRatio: number = +req.query.size / 100;
+            let adjustedHeight = Math.ceil(image.height * scalingRatio);
+            let adjustedWidth = Math.ceil(image.width * scalingRatio);
 
             return this.SendImageWithTransformation(
                 adjustedWidth,
@@ -143,8 +142,9 @@ class ImageController {
         imageHeight: number,
         resizedSavePath: string) {
 
-        const jimpImage = await jimp.read(originalPath);
-        await jimpImage.resize(imageWidth, imageHeight)
+        let jimpImage = await jimp.read(originalPath);
+        await jimpImage
+            .resize(imageWidth, imageHeight)
             .writeAsync(resizedSavePath);
     }
 
@@ -197,7 +197,11 @@ class ImageController {
         const image: Image = Image.BindMulterFile(file);
         if (image.error !== undefined) {
             uploadResult = image;
-        } else {
+        }
+        else {
+            let imageDimension = sizeOf.imageSize(image.path);
+            image.width = imageDimension.width || 0;
+            image.height = imageDimension.height || 0;
             uploadResult = await this.InsertImageInDatabase(image);
         }
 

@@ -1,6 +1,25 @@
 
 class Image implements Express.Multer.File {
 
+    public fieldname: string = "";
+    public originalname: string = "";
+    public encoding: string = "";
+    public mimetype: string = "";
+    public size: number = 0;
+    public destination: string = "";
+    public location: string = "";
+    public filename: string = "";
+    public path: string = "";
+    public buffer: Buffer = new Buffer("");
+    public width : number = 0;
+    public height : number = 0;
+    public error: string | undefined;
+    public resizesavailable: string[] = [];
+    public lastrequested: Date = new Date();
+    public createdat: Date = new Date();
+
+    private constructor() { }
+
     public static BindMulterFile(
         p_file: { [index: string]: string })
         : Image {
@@ -28,23 +47,6 @@ class Image implements Express.Multer.File {
         image.createdat = new Date();
         return image;
     }
-
-    public fieldname: string = "";
-    public originalname: string = "";
-    public encoding: string = "";
-    public mimetype: string = "";
-    public size: number = 0;
-    public destination: string = "";
-    public location: string = "";
-    public filename: string = "";
-    public path: string = "";
-    public buffer: Buffer = new Buffer("");
-    public error: string | undefined;
-    public resizesavailable: string[] = [];
-    public lastrequested: Date = new Date();
-    public createdat: Date = new Date();
-
-    private constructor() { }
 }
 
 export default Image;
