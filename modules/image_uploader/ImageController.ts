@@ -1,11 +1,12 @@
 import { ObjectId } from "bson";
 import express from "express";
-import sizeOf from "image-size";
+import sizeOf, { imageSize } from "image-size";
 import jimp from "jimp";
 import path from "path";
 import Mongodb from "../database/MongoDb";
 import Image from "./Image";
 import MulterStorage from "./MulterStorage";
+import fs from "fs";
 
 class ImageController {
     private CollectionName = "images";
@@ -25,6 +26,8 @@ class ImageController {
         this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
         this.GetImageInfo = this.GetImageInfo.bind(this);
         this.GetImagesInfo = this.GetImagesInfo.bind(this);
+        this.DeleteImage = this.DeleteImage.bind(this);
+        this.RemoveFile = this.RemoveFile.bind(this);
 
         this.Database = database;
         this.Router.post("/upload", this.UploadImage);
@@ -32,10 +35,55 @@ class ImageController {
         this.Router.get("/info", this.GetImagesInfo);
         this.Router.get("/:id/info", this.GetImageInfo);
         this.Router.get("/:id", this.GetImage);
+        this.Router.delete("/:id", this.DeleteImage);
     }
 
     public get Router() {
         return this._Router;
+    }
+
+    private RemoveFile(
+        path : string){
+        if(fs.existsSync(path)){
+            fs.unlinkSync(path);
+        }
+    }
+
+    private async DeleteImage(
+        req : express.Request,
+        res : express.Response){
+
+        let id: ObjectId;
+        try{
+            id = new ObjectId(req.params.id);
+        }catch{
+            id = new ObjectId();
+        }
+
+        this.Database.GetDocumentInCollection(
+            this.CollectionName,
+            {_id : id})
+            .then(async(image) =>{
+                if(image){
+                    this.RemoveFile(image.path);
+                    if(image.resizesavailable.length > 0){
+                        image.resizesavailable.forEach((rezise : any)  => {
+                            this.RemoveFile(rezise.path);
+                        });
+                    }
+
+                    let result = await this.Database.DeleteInCollection(this.CollectionName, {_id : id});
+
+                    if(result){
+                        this.SendResponse(res, 200, result);
+                    }else{
+                        throw new Error("Error deleting the files");
+                    }
+                }
+            })
+            .catch((err) =>{
+                this.SendResponse(res, 500, err);
+            });
     }
 
     private async GetImagesInfo(
@@ -59,7 +107,12 @@ class ImageController {
         req : express.Request,
         res : express.Response){
 
-        const id: ObjectId = new ObjectId(req.params.id);
+        let id: ObjectId;
+        try{
+            id = new ObjectId(req.params.id);
+        }catch{
+            id = new ObjectId();
+        }
         
         this.Database.GetDocumentInCollection(
             this.CollectionName,
@@ -79,7 +132,13 @@ class ImageController {
         res: express.Response) {
             
         // Error handling when id is wrong
-        const id: ObjectId = new ObjectId(req.params.id);
+        let id: ObjectId;
+        try{
+            id = new ObjectId(req.params.id);
+        }catch{
+            id = new ObjectId();
+        }
+
         const image = await this.Database.GetDocumentInCollection(
             this.CollectionName,
             { _id: id },
