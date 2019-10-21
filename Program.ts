@@ -17,7 +17,7 @@ dotenv.config();
 
 const App = express();
 const Port: number = process.env.PORT ? +process.env.PORT : 8080;
-const Database: Mongodb = new Mongodb(<string>process.env.MONGODB_URI, "files");
+const Database: Mongodb = new Mongodb(<string>process.env.MONGODB_URI, <string>process.env.MONGODB_NAME);
 
 App.use(bodyParser.urlencoded({ extended: true }));
 
