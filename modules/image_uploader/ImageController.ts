@@ -217,8 +217,7 @@ class ImageController {
                     return this.SendResponse(res, 500, { error: err.message });
                 }
 
-                // @ts-ignore
-                const files: Express.Multer.File[] = req.files ? req.files : [];
+                const files: { [fieldname: string]: File[]; } | Express.Multer.File[] = req.files ? req.files : [];
                 const uploadResults: Image[] = [];
 
                 for (let i = 0; i < files.length; i++) {
