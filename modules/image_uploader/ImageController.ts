@@ -24,13 +24,14 @@ class ImageController {
         this.SendResponse = this.SendResponse.bind(this);
         this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
         this.GetImageInfo = this.GetImageInfo.bind(this);
+        this.GetImagesInfo = this.GetImagesInfo.bind(this);
 
         this.Database = database;
         this.Router.post("/upload", this.UploadImage);
         this.Router.post("/uploads", this.UploadImages);
+        this.Router.get("/info", this.GetImagesInfo);
         this.Router.get("/:id/info", this.GetImageInfo);
         this.Router.get("/:id", this.GetImage);
-        this.Router.get("/info", this.GetImagesInfo);
     }
 
     public get Router() {
@@ -58,11 +59,11 @@ class ImageController {
         req : express.Request,
         res : express.Response){
 
-        let imageId = req.params.id;
+        const id: ObjectId = new ObjectId(req.params.id);
         
         this.Database.GetDocumentInCollection(
             this.CollectionName,
-            {id : imageId})
+            {_id : id})
             .then((image) => {
                 if(image){
                     this.SendResponse(res, 200, image);
@@ -76,7 +77,7 @@ class ImageController {
     private async GetImage(
         req: express.Request,
         res: express.Response) {
-
+            
         // Error handling when id is wrong
         const id: ObjectId = new ObjectId(req.params.id);
         const image = await this.Database.GetDocumentInCollection(
@@ -220,10 +221,12 @@ class ImageController {
             async (err: Error) => {
                 if (err) {
                     return this.SendResponse(res, 403, { error: err.message });
+                }else if(!req.file){
+                    return this.SendResponse(res, 500, { error: "No file received by the server" });
+                }else{
+                    const uploadResult: Image = await this.ParseFileUploadResult(req.file);
+                    return this.SendResponse(res, 200, uploadResult);
                 }
-
-                const uploadResult: Image = await this.ParseFileUploadResult(req.file);
-                return this.SendResponse(res, 200, uploadResult);
             });
     }
 
@@ -257,19 +260,22 @@ class ImageController {
             async (err: Error) => {
                 if (err) {
                     return this.SendResponse(res, 500, { error: err.message });
-                }
+                }else if(!req.files || req.files.length === 0){
+                    return this.SendResponse(res, 500, { error: "No files received by the server" });
+                }else{
 
-                // @ts-ignore
-                const files: Express.Multer.File[] = req.files ? req.files : [];
-                const uploadResults: Image[] = [];
-
-                for (let i = 0; i < files.length; i++) {
                     // @ts-ignore
-                    const uploadResult = await this.ParseFileUploadResult(files[i]);
-                    uploadResults.push(uploadResult);
+                    const files: Express.Multer.File[] = req.files ? req.files : [];
+                    const uploadResults: Image[] = [];
+                    
+                    for (let i = 0; i < files.length; i++) {
+                        // @ts-ignore
+                        const uploadResult = await this.ParseFileUploadResult(files[i]);
+                        uploadResults.push(uploadResult);
+                    }
+                    
+                    return this.SendResponse(res, 200, uploadResults);
                 }
-
-                return this.SendResponse(res, 200, uploadResults);
             });
     }
 
