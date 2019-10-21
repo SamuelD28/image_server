@@ -18,7 +18,7 @@ var ImageController_1 = __importDefault(require("./modules/image_uploader/ImageC
 dotenv_1.default.config();
 var App = express_1.default();
 var Port = process.env.PORT ? +process.env.PORT : 8080;
-var Database = new Index_1.Mongodb(process.env.MONGODB_URI, "files");
+var Database = new Index_1.Mongodb(process.env.MONGODB_URI, process.env.MONGODB_NAME);
 App.use(body_parser_1.default.urlencoded({ extended: true }));
 App.use("/images", new ImageController_1.default(Database).Router);
 App.get("/", function (req, res) {

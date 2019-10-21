@@ -1,6 +1,5 @@
 import { ObjectId } from "bson";
-import express, { response } from "express";
-import fs from "fs";
+import express from "express";
 import sizeOf from "image-size";
 import jimp from "jimp";
 import path from "path";
@@ -24,15 +23,54 @@ class ImageController {
         this.InsertImageInDatabase = this.InsertImageInDatabase.bind(this);
         this.SendResponse = this.SendResponse.bind(this);
         this.ParseFileUploadResult = this.ParseFileUploadResult.bind(this);
+        this.GetImageInfo = this.GetImageInfo.bind(this);
 
         this.Database = database;
-        this.Router.get("/:id", this.GetImage);
         this.Router.post("/upload", this.UploadImage);
         this.Router.post("/uploads", this.UploadImages);
+        this.Router.get("/:id/info", this.GetImageInfo);
+        this.Router.get("/:id", this.GetImage);
+        this.Router.get("/info", this.GetImagesInfo);
     }
 
     public get Router() {
         return this._Router;
+    }
+
+    private async GetImagesInfo(
+        req : express.Request,
+        res : express.Response){
+
+        this.Database.GetDocumentsInCollection(
+            this.CollectionName,
+            {error : undefined})
+            .then((images) => {
+                if(images){
+                    this.SendResponse(res, 200, images);
+                }
+            })
+            .catch((err) =>{
+                this.SendResponse(res, 404, err);
+            });
+    }
+
+    private async GetImageInfo(
+        req : express.Request,
+        res : express.Response){
+
+        let imageId = req.params.id;
+        
+        this.Database.GetDocumentInCollection(
+            this.CollectionName,
+            {id : imageId})
+            .then((image) => {
+                if(image){
+                    this.SendResponse(res, 200, image);
+                }
+            })
+            .catch((err) =>{
+                this.SendResponse(res, 404, err);
+            });
     }
 
     private async GetImage(
