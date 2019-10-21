@@ -8,7 +8,7 @@
     "build-ts": "tsc",
     "postinstall": "npm run build-ts",
     "start": "npm run serve",
-    "serve": "node build/Program.js"
+    "serve": "node Program.js"
   },
   "repository": {
     "type": "git",
