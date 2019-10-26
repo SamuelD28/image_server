@@ -302,11 +302,13 @@ class ImageController {
                         blobName, 
                         stream, 
                         streamLength, 
-                        async(err) => {
+                        async(err, result) => {
 
                             if(err) {
                                 return this.SendResponse(res, 500, { error: err.message });
                             }
+
+                            req.file.originalname = result.name;
 
                             const uploadResult: Image = await this.ParseFileUploadResult(req.file);
                             return this.SendResponse(res, 200, uploadResult);
@@ -326,8 +328,8 @@ class ImageController {
             uploadResult = image;
         }
         else {
-            let imageDimension = sizeOf.imageSize(image.path);
-            image.width = imageDimension.width || 0;
+            let imageDimension = sizeOf.imageSize(file.buffer);
+            image.width = imageDimension.width ||  0;
             image.height = imageDimension.height || 0;
             uploadResult = await this.InsertImageInDatabase(image);
         }
