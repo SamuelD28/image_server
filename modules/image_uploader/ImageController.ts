@@ -77,7 +77,6 @@ class ImageController {
                             this.BlobContainerName,
                             image.originalname,
                             (err, deleteresult)=>{
-                                console.log(deleteresult);
                                 if(!err){
                                     this.SendResponse(res, 200, result);
                                 }
