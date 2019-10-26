@@ -46,18 +46,11 @@ class MulterStorage {
     * the files sent by the client into the express request object.
     */
     public GetMiddleware(): multer.Instance {
-        const storage = multer.diskStorage({
-            destination: this.PickDestinationFolder,
-            filename: this.PickFileName,
-        });
+        const inMemoryStorage = multer.memoryStorage();
 
         return multer({
-            storage,
+            storage : inMemoryStorage,
             fileFilter: this.ExecuteFileValidation,
-            // NOTE : Should find a way to catch filesize in file filter function
-            // limits: {
-            //     fileSize: 5000000,
-            // },
         });
     }
 
