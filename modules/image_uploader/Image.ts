@@ -6,6 +6,7 @@ class Image implements Express.Multer.File {
     public encoding: string = "";
     public mimetype: string = "";
     public size: number = 0;
+    public url : string = "";
     public destination: string = "";
     public location: string = "";
     public filename: string = "";

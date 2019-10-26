@@ -8,10 +8,11 @@ import Image from "./Image";
 import MulterStorage from "./MulterStorage";
 import fs from "fs";
 import getStream from "into-stream";
-import azureStorage from "azure-storage";
 import azurestorage from "azure-storage";
 
 class ImageController {
+    private BlobContainerUrl : string = "https://pizzeriastorage.blob.core.windows.net/pizzerias-storage-container";
+    private BlobContainerName : string = "pizzerias-storage-container";
     private BlobService : azurestorage.BlobService;
     private CollectionName = "images";
     private Database: Mongodb;
@@ -21,7 +22,7 @@ class ImageController {
     private _Router = express.Router();
 
     constructor(database: Mongodb) {
-        this.BlobService = azureStorage.createBlobService();
+        this.BlobService = azurestorage.createBlobService();
         this.GetImage = this.GetImage.bind(this);
         this.UploadImage = this.UploadImage.bind(this);
         this.UploadImages = this.UploadImages.bind(this);
@@ -69,17 +70,18 @@ class ImageController {
             {_id : id})
             .then(async(image) =>{
                 if(image){
-                    this.RemoveFile(image.path);
-                    if(image.resizesavailable.length > 0){
-                        image.resizesavailable.forEach((rezise : any)  => {
-                            this.RemoveFile(rezise.path);
-                        });
-                    }
-
                     let result = await this.Database.DeleteInCollection(this.CollectionName, {_id : id});
 
                     if(result){
-                        this.SendResponse(res, 200, result);
+                        this.BlobService.deleteBlobIfExists(
+                            this.BlobContainerName,
+                            image.originalname,
+                            (err, deleteresult)=>{
+                                console.log(deleteresult);
+                                if(!err){
+                                    this.SendResponse(res, 200, result);
+                                }
+                            });
                     }else{
                         throw new Error("Error deleting the files");
                     }
@@ -309,7 +311,7 @@ class ImageController {
                             }
 
                             req.file.originalname = result.name;
-
+                            
                             const uploadResult: Image = await this.ParseFileUploadResult(req.file);
                             return this.SendResponse(res, 200, uploadResult);
                     });
@@ -331,6 +333,7 @@ class ImageController {
             let imageDimension = sizeOf.imageSize(file.buffer);
             image.width = imageDimension.width ||  0;
             image.height = imageDimension.height || 0;
+            image.url = this.BlobContainerUrl + "/" + image.originalname;
             uploadResult = await this.InsertImageInDatabase(image);
         }
 
