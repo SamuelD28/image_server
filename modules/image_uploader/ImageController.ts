@@ -1,14 +1,18 @@
 import { ObjectId } from "bson";
 import express from "express";
-import sizeOf, { imageSize } from "image-size";
+import sizeOf from "image-size";
 import jimp from "jimp";
 import path from "path";
 import Mongodb from "../database/MongoDb";
 import Image from "./Image";
 import MulterStorage from "./MulterStorage";
 import fs from "fs";
+import getStream from "into-stream";
+import azureStorage from "azure-storage";
+import azurestorage from "azure-storage";
 
 class ImageController {
+    private BlobService : azurestorage.BlobService;
     private CollectionName = "images";
     private Database: Mongodb;
     private FileMiddleware = MulterStorage.GetMiddleware();
@@ -17,7 +21,7 @@ class ImageController {
     private _Router = express.Router();
 
     constructor(database: Mongodb) {
-
+        this.BlobService = azureStorage.createBlobService();
         this.GetImage = this.GetImage.bind(this);
         this.UploadImage = this.UploadImage.bind(this);
         this.UploadImages = this.UploadImages.bind(this);
@@ -269,6 +273,11 @@ class ImageController {
         return containsAllKeys;
     }
 
+    GetBlobName(originalName : string){
+        const identifier = Math.random().toString().replace(/0\./, '');
+        return `${identifier}-${originalName}`;
+    };
+
     private UploadImage(
         req: express.Request,
         res: express.Response)
@@ -283,8 +292,26 @@ class ImageController {
                 }else if(!req.file){
                     return this.SendResponse(res, 500, { error: "No file received by the server" });
                 }else{
-                    const uploadResult: Image = await this.ParseFileUploadResult(req.file);
-                    return this.SendResponse(res, 200, uploadResult);
+
+                    const   blobName = this.GetBlobName(req.file.originalname), 
+                            stream = getStream(req.file.buffer), 
+                            streamLength = req.file.buffer.length;
+
+                    this.BlobService.createBlockBlobFromStream(
+                        "pizzerias-storage-container", 
+                        blobName, 
+                        stream, 
+                        streamLength, 
+                        async(err) => {
+
+                            if(err) {
+                                return this.SendResponse(res, 500, { error: err.message });
+                            }
+
+                            const uploadResult: Image = await this.ParseFileUploadResult(req.file);
+                            return this.SendResponse(res, 200, uploadResult);
+                    });
+
                 }
             });
     }
